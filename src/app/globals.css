@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  /* Canvas & Surfaces */
+  --canvas: #F3F1EA;
+  --canvas-input: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F1EFE8;
+
+  /* Text */
+  --canvas-text: #17181C;
+  --canvas-text-dim: #6B6C74;
+  --canvas-border: #E4E1D5;
+
+  /* Sidebar (dark in both modes) */
+  --sidebar: #18191D;
+  --sidebar-text: #F1F0EC;
+
+  /* Accent */
+  --accent: #E8734A;
+  --accent-strong: #CE5A32;
+
+  /* Status */
+  --status: #3F9863;
+  --danger: #C94A3F;
+
+  /* Radius */
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 7px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0F1013;
+    --surface: #1C1D22;
+    --surface-2: #292A31;
+
+    --canvas-text: #F1F0EC;
+    --canvas-text-dim: #9A9BA3;
+    --canvas-border: #2A2B31;
+
+    --canvas-input: #1C1D22;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-input: var(--canvas-input);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-canvas-text: var(--canvas-text);
+  --color-canvas-text-dim: var(--canvas-text-dim);
+  --color-canvas-border: var(--canvas-border);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-status: var(--status);
+  --color-danger: var(--danger);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-sans: var(--font-ibm-plex-sans);
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+}
+
+body {
+  background: var(--canvas);
+  color: var(--canvas-text);
+  font-family: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif;
+}
