@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -16,18 +15,40 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      // 1. Get CSRF token
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
 
-    if (result?.error) {
-      setError("Invalid email or password");
+      // 2. Submit credentials with CSRF token
+      const callbackUrl = "/resources";
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          email,
+          password,
+          csrfToken,
+          callbackUrl,
+          json: "true",
+        }),
+      });
+
+      if (res.redirect) {
+        // Successful login — follow the redirect
+        window.location.href = res.url || callbackUrl;
+      } else {
+        const data = await res.json();
+        if (data.error) {
+          setError("Invalid email or password");
+        } else {
+          window.location.href = callbackUrl;
+        }
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
       setLoading(false);
-    } else {
-      router.push("/resources");
-      router.refresh();
     }
   }
 
