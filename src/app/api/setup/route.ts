@@ -11,45 +11,61 @@ const setupSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const allowed = await canCreateAdmin();
-  if (!allowed) {
+  try {
+    const allowed = await canCreateAdmin();
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Admin already exists" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const parsed = setupSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, password } = parsed.data;
+    const passwordHash = await hashPassword(password);
+
+    const user = await db.user.create({
+      data: { name, email, passwordHash },
+    });
+
+    await db.userSettings.create({
+      data: { userId: user.id },
+    });
+
+    await markInstalled();
+
+    return NextResponse.json({ ok: true, userId: user.id });
+  } catch (error) {
+    console.error("Setup error:", error);
     return NextResponse.json(
-      { error: "Admin already exists" },
-      { status: 403 }
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
     );
   }
-
-  const body = await request.json();
-  const parsed = setupSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid input", details: parsed.error.flatten() },
-      { status: 400 }
-    );
-  }
-
-  const { name, email, password } = parsed.data;
-  const passwordHash = await hashPassword(password);
-
-  const user = await db.user.create({
-    data: { name, email, passwordHash },
-  });
-
-  await db.userSettings.create({
-    data: { userId: user.id },
-  });
-
-  await markInstalled();
-
-  return NextResponse.json({ ok: true, userId: user.id });
 }
 
 export async function GET() {
-  const installed = await isInstalled();
-  const canCreate = await canCreateAdmin();
+  try {
+    const installed = await isInstalled();
+    const canCreate = await canCreateAdmin();
 
-  return NextResponse.json({
-    installed,
-    canCreateAdmin: canCreate,
-  });
+    return NextResponse.json({
+      installed,
+      canCreateAdmin: canCreate,
+    });
+  } catch (error) {
+    console.error("Setup GET error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

@@ -1,7 +1,28 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { db } from "./db";
-import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
+const SALT_ROUNDS = 12;
+
+function hashPasswordSync(password: string, salt: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, salt, SALT_ROUNDS, 64, "sha512", (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(`${salt}:${derivedKey.toString("hex")}`);
+    });
+  });
+}
+
+function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const [salt, hash] = storedHash.split(":");
+    crypto.pbkdf2(password, salt, SALT_ROUNDS, 64, "sha512", (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(derivedKey.toString("hex") === hash);
+    });
+  });
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -19,7 +40,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user?.passwordHash) return null;
 
-        const valid = await bcrypt.compare(
+        const valid = await verifyPassword(
           credentials.password as string,
           user.passwordHash
         );
@@ -51,7 +72,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12);
+  const salt = crypto.randomBytes(16).toString("hex");
+  return hashPasswordSync(password, salt);
 }
 
 export async function getCurrentUserId(): Promise<string | null> {
