@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword } from "@/lib/crypto";
 import { canCreateAdmin, isInstalled, markInstalled } from "@/lib/setup";
 import { z } from "zod";
 
