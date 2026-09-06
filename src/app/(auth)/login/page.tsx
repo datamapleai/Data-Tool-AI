@@ -20,8 +20,7 @@ export default function LoginPage() {
       const csrfRes = await fetch("/api/auth/csrf");
       const { csrfToken } = await csrfRes.json();
 
-      // 2. Submit credentials with CSRF token
-      const callbackUrl = "/resources";
+      // 2. Submit credentials — don't follow redirect automatically
       const res = await fetch("/api/auth/callback/credentials", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -29,24 +28,35 @@ export default function LoginPage() {
           email,
           password,
           csrfToken,
-          callbackUrl,
+          callbackUrl: "/resources",
           json: "true",
         }),
+        redirect: "manual",
       });
 
-      if (res.url) {
-        // Successful login — follow the redirect
-        window.location.href = res.url;
-      } else {
+      // 3. Handle the response
+      if (res.status === 0 || res.type === "opaqueredirect") {
+        // Opaque redirect — navigate manually
+        window.location.href = "/resources";
+        return;
+      }
+
+      if (res.status === 200) {
         const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
         if (data.error) {
-          setError("Invalid email or password");
-        } else {
-          window.location.href = callbackUrl;
+          setError("Email ou senha inválidos");
+          return;
         }
       }
+
+      // Fallback — try navigating to /resources
+      window.location.href = "/resources";
     } catch {
-      setError("Something went wrong");
+      setError("Algo deu errado. Tente novamente.");
     } finally {
       setLoading(false);
     }
