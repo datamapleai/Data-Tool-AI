@@ -34,9 +34,9 @@ export default function LoginPage() {
         }),
       });
 
-      if (res.redirect) {
+      if (res.url) {
         // Successful login — follow the redirect
-        window.location.href = res.url || callbackUrl;
+        window.location.href = res.url;
       } else {
         const data = await res.json();
         if (data.error) {
